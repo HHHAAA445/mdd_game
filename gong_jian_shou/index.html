@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🏹 弓箭手 · 射击游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-container">
+            <!-- 顶部信息栏 -->
+            <div class="header">
+                <div class="stats">
+                    <span>🎯 <span id="scoreDisplay">0</span></span>
+                    <span>🏹 <span id="arrowsDisplay">20</span></span>
+                    <span>🔥 <span id="comboDisplay">0</span></span>
+                    <span>🏆 <span id="bestDisplay">0</span></span>
+                    <span id="cheatBadge" style="display:none;color:#ff6b6b;">⚡作弊</span>
+                </div>
+                <div class="controls">
+                    <button id="settingsBtn">⚙️</button>
+                    <button id="restartBtn">🔄 重来</button>
+                    <button id="helpBtn">❓ 说明</button>
+                </div>
+            </div>
+
+            <!-- 游戏画布 -->
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+            <!-- 底部状态栏 -->
+            <div class="footer">
+                <div id="statusBar" class="status-bar">
+                    🎯 鼠标移动瞄准 · 左键射击
+                </div>
+                <div class="wind-display">
+                    🌬️ 风力: <span id="windDisplay">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 设置面板 ===== -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content settings-content">
+                <span id="closeSettings" class="close">&times;</span>
+                <h2>⚙️ 游戏设置</h2>
+                <div class="settings-body">
+                    <div class="settings-group">
+                        <h3>🎯 金手指（开启后不计成绩）</h3>
+                        <div class="setting-row">
+                            <label>🏹 无限箭矢</label>
+                            <button id="infiniteArrowsBtn" class="toggle-btn off">关闭</button>
+                        </div>
+                        <div class="setting-row">
+                            <label>🛡️ 无敌模式（敌人无法到达终点）</label>
+                            <button id="godModeBtn" class="toggle-btn off">关闭</button>
+                        </div>
+                        <div class="setting-row">
+                            <label>💀 一击必杀</label>
+                            <button id="oneHitKillBtn" class="toggle-btn off">关闭</button>
+                        </div>
+                        <div class="setting-row cheat-indicator">
+                            ⚠️ 开启金手指将 <strong style="color:#ff6b6b;">不计入最高分</strong>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3>🎵 音效</h3>
+                        <div class="setting-row">
+                            <label>音效开关</label>
+                            <button id="soundToggleBtn" class="toggle-btn on">🔊 开启</button>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3>🎨 显示</h3>
+                        <div class="setting-row">
+                            <label>显示防线</label>
+                            <button id="showLineBtn" class="toggle-btn on">✅ 显示</button>
+                        </div>
+                    </div>
+                </div>
+                <button id="closeSettingsBtn" class="help-close-btn">确定</button>
+            </div>
+        </div>
+
+        <!-- ===== 玩法说明弹窗 ===== -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content">
+                <span id="closeHelp" class="close">&times;</span>
+                <h2>🏹 弓箭手 · 玩法说明</h2>
+                <div class="help-body">
+                    <div class="help-section">
+                        <h3>🎯 怎么玩</h3>
+                        <ul>
+                            <li><strong>瞄准：</strong>移动鼠标（或手指滑动）调整准星位置</li>
+                            <li><strong>射击：</strong>点击鼠标左键（或点击屏幕）发射弓箭</li>
+                            <li><strong>目标：</strong>射杀所有飞行的敌人</li>
+                            <li><strong>⚠️ 防线：</strong>敌人越过 <strong>红色虚线</strong> 则游戏结束</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h3>🏹 箭矢机制</h3>
+                        <ul>
+                            <li>箭矢受 <strong>重力</strong> 影响，呈抛物线飞行</li>
+                            <li><strong>🌬️ 风力</strong> 会吹偏箭矢，注意风向！</li>
+                            <li>每次射击消耗 1 支箭（可开启无限箭矢）</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h3>🔥 连击系统</h3>
+                        <ul>
+                            <li>连续命中敌人积累 <strong>Combo</strong>，Combo 越高得分越多</li>
+                            <li>射失（未命中）会中断 Combo</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h3>👾 敌人类型</h3>
+                        <ul>
+                            <li><strong>🟠 普通</strong>：速度一般，+10分</li>
+                            <li><strong>🔵 快速</strong>：速度很快，+20分</li>
+                            <li><strong>🟣 BOSS</strong>：巨大缓慢，需要3箭，+50分</li>
+                        </ul>
+                    </div>
+                    <div class="help-section">
+                        <h3>⚙️ 金手指</h3>
+                        <ul>
+                            <li><strong>无限箭矢</strong>：箭矢用不完</li>
+                            <li><strong>无敌模式</strong>：敌人越过防线也不结束</li>
+                            <li><strong>一击必杀</strong>：一箭消灭任何敌人</li>
+                            <li>⚠️ 开启金手指 <strong style="color:#ff6b6b;">不计入最高分</strong></li>
+                        </ul>
+                    </div>
+                </div>
+                <button id="closeHelpBtn" class="help-close-btn">开始射箭！</button>
+            </div>
+        </div>
+
+        <!-- ===== 游戏结束弹窗 ===== -->
+        <div id="gameOverModal" class="modal">
+            <div class="modal-content gameover-content">
+                <h2 id="gameOverTitle">💔 游戏结束</h2>
+                <p id="gameOverReason" style="color:#b3d9ec;margin-bottom:12px;"></p>
+                <div class="gameover-stats">
+                    <div class="go-row"><span>最终得分</span><span id="finalScore">0</span></div>
+                    <div class="go-row"><span>最高纪录</span><span id="finalBest">0</span></div>
+                    <div class="go-row"><span>最大连击</span><span id="finalCombo">0</span></div>
+                    <div class="go-row"><span>击杀数</span><span id="finalKills">0</span></div>
+                    <div class="go-row" id="cheatWarning" style="display:none;color:#ff6b6b;">
+                        <span>⚠️ 金手指模式</span>
+                        <span>不计入成绩</span>
+                    </div>
+                </div>
+                <button id="restartFromGameOverBtn" class="help-close-btn">🔄 再来一局</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
