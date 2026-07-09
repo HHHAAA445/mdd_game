@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>塔防 · 终极版</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-panel">
+            <canvas id="gameCanvas" width="720" height="540"></canvas>
+            
+            <div class="ui-bar">
+                <div class="stats">
+                    <span>❤️ <span id="livesDisplay">3</span></span>
+                    <span>💰 <span id="goldDisplay">150</span></span>
+                    <span>🐾 <span id="waveDisplay">0</span></span>
+                    <span>🏆 <span id="enemiesKilledDisplay">0</span></span>
+                </div>
+                <div class="actions">
+                    <div class="tower-hint" id="towerHint">
+                        <span id="selectedTowerDisplay">🏹 弓箭塔</span>
+                        <button id="switchTowerBtn" class="small-btn">切换</button>
+                        <span class="hint-text" id="hintText">| 点击空地建造</span>
+                    </div>
+                    <button id="nextWaveBtn">⚔️ 下一波</button>
+                    <button id="restartBtn">🔄 重来</button>
+                    <button id="helpBtn">❓ 说明</button>
+                    <button id="settingsBtn">⚙️</button>
+                </div>
+            </div>
+            <div id="towerInfo" class="tower-info"></div>
+        </div>
+    </div>
+
+    <!-- ⚙️ 设置面板 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content settings-content">
+            <span id="closeSettings" class="close">&times;</span>
+            <h2>⚙️ 游戏设置</h2>
+            <div class="settings-body">
+                <div class="settings-group">
+                    <h3>🎯 难度调节</h3>
+                    <div class="setting-row">
+                        <label>难度倍率</label>
+                        <div class="range-control">
+                            <input type="range" id="difficultySlider" min="1" max="20" value="12" step="0.5">
+                            <span id="difficultyValue">12x</span>
+                        </div>
+                        <div class="range-labels">
+                            <span>简单 (1x)</span>
+                            <span>地狱 (20x)</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>速度倍率</label>
+                        <div class="range-control">
+                            <input type="range" id="speedSlider" min="0.5" max="4" value="2" step="0.1">
+                            <span id="speedValue">2.0x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>💰 经济调节</h3>
+                    <div class="setting-row">
+                        <label>初始金币</label>
+                        <div class="range-control">
+                            <input type="range" id="startGoldSlider" min="50" max="500" value="150" step="10">
+                            <span id="startGoldValue">150</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>击杀奖励倍率</label>
+                        <div class="range-control">
+                            <input type="range" id="rewardSlider" min="0.5" max="5" value="1" step="0.1">
+                            <span id="rewardValue">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>🏗️ 塔属性调节</h3>
+                    <div class="setting-row">
+                        <label>塔基础伤害</label>
+                        <div class="range-control">
+                            <input type="range" id="towerDamageSlider" min="5" max="100" value="20" step="1">
+                            <span id="towerDamageValue">20</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>塔基础射程</label>
+                        <div class="range-control">
+                            <input type="range" id="towerRangeSlider" min="60" max="250" value="120" step="5">
+                            <span id="towerRangeValue">120</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>塔基础攻速 (数值越小越快)</label>
+                        <div class="range-control">
+                            <input type="range" id="towerFireRateSlider" min="8" max="80" value="30" step="1">
+                            <span id="towerFireRateValue">30</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>🎵 音效</h3>
+                    <div class="setting-row">
+                        <label>音效开关</label>
+                        <button id="soundToggleBtn" class="toggle-btn">🔊 开启</button>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="applySettingsBtn" class="help-close-btn">✅ 应用设置</button>
+                    <button id="resetSettingsBtn" class="reset-btn">↩️ 恢复默认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 塔类型切换菜单 -->
+    <div id="towerMenu" class="tower-menu" style="display:none;">
+        <div class="tower-option" data-type="arrow">
+            <span class="tower-icon">🏹</span>
+            <span class="tower-name">弓箭塔</span>
+            <span class="tower-desc">攻速快·伤害低</span>
+        </div>
+        <div class="tower-option" data-type="cannon">
+            <span class="tower-icon">💣</span>
+            <span class="tower-name">炮塔</span>
+            <span class="tower-desc">范围伤害·攻速慢</span>
+        </div>
+        <div class="tower-option" data-type="magic">
+            <span class="tower-icon">🔮</span>
+            <span class="tower-name">魔法塔</span>
+            <span class="tower-desc">高伤害·射程远</span>
+        </div>
+    </div>
+
+    <!-- 右键/长按菜单 -->
+    <div id="contextMenu" class="context-menu" style="display:none;">
+        <div class="menu-item" id="menuInfo">📊 信息</div>
+        <div class="menu-item" id="menuUpgrade">⬆️ 升级</div>
+        <div class="menu-item" id="menuSell">💰 拆除 (返还50%)</div>
+        <div class="menu-item" id="menuCancel">❌ 取消</div>
+    </div>
+
+    <!-- 塔信息弹窗 -->
+    <div id="towerInfoModal" class="modal info-modal">
+        <div class="modal-content info-content">
+            <span id="closeInfo" class="close">&times;</span>
+            <h2 id="infoTitle">🏰 塔信息</h2>
+            <div id="infoBody" class="info-body">
+                <div class="info-row"><span>等级</span><span id="infoLevel">1</span></div>
+                <div class="info-row"><span>类型</span><span id="infoType">弓箭塔</span></div>
+                <div class="info-row"><span>伤害</span><span id="infoDamage">15</span></div>
+                <div class="info-row"><span>射程</span><span id="infoRange">130</span></div>
+                <div class="info-row"><span>攻速</span><span id="infoSpeed">快</span></div>
+                <div class="info-row"><span>生命值</span><span id="infoHealth">100/100</span></div>
+                <div class="info-row"><span>建造花费</span><span id="infoCost">60💰</span></div>
+                <div class="info-row"><span>升级花费</span><span id="infoUpgradeCost">30💰</span></div>
+            </div>
+            <button id="closeInfoBtn" class="help-close-btn">知道了</button>
+        </div>
+    </div>
+
+    <!-- 玩法说明弹窗 -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span id="closeHelp" class="close">&times;</span>
+            <h2>🎮 欢迎来到塔防世界！</h2>
+            <div class="help-body">
+                <div class="help-section">
+                    <h3>🎯 游戏目标</h3>
+                    <p>保护好你的基地！建造防御塔阻止敌人沿着黄色小路前进。每漏掉一个敌人，你就会失去一颗❤️。</p>
+                </div>
+                <div class="help-section">
+                    <h3>🖱️ 怎么玩</h3>
+                    <ul>
+                        <li><strong>建塔：</strong>点击空地上的格子，就能造一座塔</li>
+                        <li><strong>选塔：</strong>点击"切换"按钮，可以选择不同种类的塔</li>
+                        <li><strong>升级/拆除：</strong>右键点击（或长按手机屏幕）塔，会弹出操作菜单</li>
+                        <li><strong>开始战斗：</strong>点击"下一波"按钮，敌人就会涌来</li>
+                        <li><strong>调整难度：</strong>点击 ⚙️ 按钮打开设置面板</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <h3>🏗️ 三种塔</h3>
+                    <ul>
+                        <li><strong>🏹 弓箭塔</strong> (60💰)：射速超快，适合对付成群的弱小敌人</li>
+                        <li><strong>💣 炮塔</strong> (80💰)：爆炸范围伤害，清理密集敌群很拿手</li>
+                        <li><strong>🔮 魔法塔</strong> (100💰)：伤害高、射程远，对付BOSS最有效</li>
+                    </ul>
+                </div>
+                <div class="help-section">
+                    <h3>💡 小贴士</h3>
+                    <ul>
+                        <li>塔在拐角处能覆盖更多小路，效率更高</li>
+                        <li>别急着升级，先铺几座塔建立防线</li>
+                        <li>敌人会攻击塔，记得保护它们</li>
+                        <li>每5波会有一个超强BOSS，提前做好准备</li>
+                        <li>点击 ⚙️ 可以调节难度，找到最适合自己的节奏</li>
+                    </ul>
+                </div>
+            </div>
+            <button id="closeHelpBtn" class="help-close-btn">开始游戏！</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
